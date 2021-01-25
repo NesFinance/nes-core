@@ -6,6 +6,7 @@ const Lottery = artifacts.require("./Lottery.sol")
 const MasterChef = artifacts.require('./MasterChef.sol')
 const Controller = artifacts.require('./Controller.sol')
 
+
 module.exports = async function (deployer) {
     const token = await Token.deployed()
     const gbtToken = await GBTToken.deployed()
@@ -18,6 +19,8 @@ module.exports = async function (deployer) {
 
         await members.addMod(masterchef.address)
         await members.addSupport(masterchef.address)
+        await members.addMod(controller.address)
+        await members.addSupport(controller.address)
         await members.addMod(process.env.DEV_ADDRESS)
         await members.addSupport(process.env.DEV_ADDRESS)
         await members.addMember(process.env.DEV_ADDRESS, process.env.DEV_ADDRESS)
