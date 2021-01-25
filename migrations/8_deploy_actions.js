@@ -4,7 +4,7 @@ const GBTToken = artifacts.require('./TokenGBT.sol')
 const Members = artifacts.require('./Members.sol')
 const Lottery = artifacts.require("./Lottery.sol")
 const MasterChef = artifacts.require('./MasterChef.sol')
-
+const Controller = artifacts.require('./Controller.sol')
 
 module.exports = async function (deployer) {
     const token = await Token.deployed()
@@ -12,7 +12,8 @@ module.exports = async function (deployer) {
     const members = await Members.deployed()
     const lottery = await Lottery.deployed()
     const masterchef = await MasterChef.deployed()
-
+    const controller = await Controller.deployed()
+    
     if (parseInt(process.env.DEPLOY_ACTIONS) == 1) {
 
         await members.addMod(masterchef.address)
@@ -37,11 +38,13 @@ module.exports = async function (deployer) {
 
         await masterchef.setPercent(new BigNumber((3 * (10 ** 18))), new BigNumber((2 * (10 ** 18))), new BigNumber((1 * (10 ** 18))), new BigNumber((1 * (10 ** 18))), new BigNumber((1 * (10 ** 18))))
         await masterchef.lottery(lottery.address)
+        await masterchef.controller(controller.address)
 
         if (parseInt(process.env.TRANSFER_OWNER_TO_DEV) == 1) {
             await members.transferOwnership(process.env.DEV_ADDRESS)
             await lottery.transferOwnership(process.env.DEV_ADDRESS)
             await masterchef.transferOwnership(process.env.DEV_ADDRESS)
+            await controller.transferOwnership(process.env.DEV_ADDRESS)
         }
 
     }
