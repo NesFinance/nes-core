@@ -8,3 +8,4 @@ rm -rf flats/*
 ./node_modules/.bin/truffle-flattener contracts/MasterChef.sol > flats/MasterChef.sol
 ./node_modules/.bin/truffle-flattener contracts/TokenX.sol > flats/TokenX.sol
 ./node_modules/.bin/truffle-flattener contracts/Lottery.sol > flats/Lottery.sol
+./node_modules/.bin/truffle-flattener contracts/Controller.sol > flats/Controller.sol

@@ -10,6 +10,7 @@ truffle run verify TokenGBT --network bsc_testnet --license SPDX-License-Identif
 truffle run verify MasterChef --network bsc_testnet --license SPDX-License-Identifier
 truffle run verify TokenX --network bsc_testnet --license SPDX-License-Identifier
 truffle run verify Lottery --network bsc_testnet --license SPDX-License-Identifier
+truffle run verify Controller --network bsc_testnet --license SPDX-License-Identifier
 
 # Flats Contracts
 mkdir -p flats
@@ -20,3 +21,4 @@ rm -rf flats/*
 ./node_modules/.bin/truffle-flattener contracts/MasterChef.sol > flats/MasterChef.sol
 ./node_modules/.bin/truffle-flattener contracts/TokenX.sol > flats/TokenX.sol
 ./node_modules/.bin/truffle-flattener contracts/Lottery.sol > flats/Lottery.sol
+./node_modules/.bin/truffle-flattener contracts/Controller.sol > flats/Controller.sol
