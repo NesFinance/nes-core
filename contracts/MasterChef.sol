@@ -103,7 +103,8 @@ contract MasterChef is Ownable {
         address _wbnb,
         address _devaddr,
         uint256 _tokenPerBlock,
-        uint256 _startBlock
+        uint256 _startBlock,
+        bool _checkFactoryDEX
     ) public {
         token = _token;
         gbt = _gbt;
@@ -125,23 +126,25 @@ contract MasterChef is Ownable {
 
         totalAllocPoint = 1000;
 
-        /*if (IPancakeFactory(factory).getPair(address(token), _wbnb) == address(0)) {
-            IPancakeFactory(factory).createPair(address(token), _wbnb);
-            tokenLP = IPancakeFactory(factory).getPair(address(token), _wbnb);
-            poolInfo.push(PoolInfo({
-                lpToken: IBEP20(tokenLP),
-                allocPoint: 1000,
-                lastRewardBlock: startBlock,
-                accTokenPerShare: 0
-            }));
-            totalAllocPoint = totalAllocPoint.add(1000);
+        if(_checkFactoryDEX){
+            if (IPancakeFactory(factory).getPair(address(token), _wbnb) == address(0)) {
+                IPancakeFactory(factory).createPair(address(token), _wbnb);
+                tokenLP = IPancakeFactory(factory).getPair(address(token), _wbnb);
+                poolInfo.push(PoolInfo({
+                    lpToken: IBEP20(tokenLP),
+                    allocPoint: 1000,
+                    lastRewardBlock: startBlock,
+                    accTokenPerShare: 0
+                }));
+                totalAllocPoint = totalAllocPoint.add(1000);
+            }
+
+            if (IPancakeFactory(factory).getPair(address(gbt), _wbnb) == address(0)) {
+                IPancakeFactory(factory).createPair(address(gbt), _wbnb);
+                gbtLP = IPancakeFactory(factory).getPair(address(gbt), _wbnb);
+            }
         }
 
-        if (IPancakeFactory(factory).getPair(address(gbt), _wbnb) == address(0)) {
-            IPancakeFactory(factory).createPair(address(gbt), _wbnb);
-            gbtLP = IPancakeFactory(factory).getPair(address(gbt), _wbnb);
-        }*/
-        
     }
 
     function setPercent(uint256 r_1, uint256 r_2, uint256 r_3, uint256 r_4, uint256 r_5) external onlyOwner {
