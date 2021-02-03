@@ -1,10 +1,10 @@
-# Lumaris
+# Nes Finance
 
-In this poject we create the BEP20 Smart Contracts for [Lumaris](https://lumaris.finance/) Version 1.0.
+In this poject we create the BEP20 Smart Contracts for [Nes Finance](https://nes.finance/) Version 1.0.
 
 We use the framework [Truffle](http://truffleframework.com) for development and test. 
 
-This is the [Verified Address](https://bscscan.com/address/xxxxxxxxx#code) for the Lumaris Contract on  bscscan.com
+This is the [Verified Address](https://bscscan.com/address/xxxxxxxxx#code) for the Nes Finance Contract on  bscscan.com
 
 ### Initialize project libraries
 The following libraries are necessary to be able to execute the smart contracts.
@@ -86,4 +86,4 @@ This command is used to compile the contracts, upload them to the network, verif
 
 ### What else?
 
-If you have questions, drop me a line at contact@lumaris.finance
+If you have questions, drop me a line at contact@nes.finance
