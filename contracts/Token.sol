@@ -3,10 +3,25 @@ pragma solidity 0.6.12;
 
 import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/BEP20.sol";
 
+interface IUniswapV2Pair {
+    function sync() external;
+}
+
 // Token with Governance.
 contract Token is BEP20 {
 
-    constructor(string memory _name, string memory _alias) BEP20(_name, _alias) public {}
+    address public lp;
+    bool public paused;
+    uint256 public lastGrillTime;
+    uint256 public GRILL_RATE = 2;
+    uint256 public GRILL_REWARD = 7;
+    uint256 public totalGrilled;
+
+    mapping(address => bool) public moderators;
+
+    constructor(string memory _name, string memory _alias) BEP20(_name, _alias) public {
+        moderators[msg.sender] = true;
+    }
 
     /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (MasterChef).
     function mint(address _to, uint256 _amount) public onlyOwner {
@@ -17,7 +32,89 @@ contract Token is BEP20 {
     function burn(uint256 _amount) public {
         _burn(msg.sender, _amount);
         _moveDelegates(_delegates[msg.sender], address(0), _amount);
+    }
+
+    modifier onlyMod() {
+        require(moderators[msg.sender] || msg.sender == owner(), "Must be mod");
+        _;
+    }
+
+    function addMod(address _mod) external onlyOwner {
+        if (_mod != address(0x0) && _mod != address(0)) {
+            moderators[_mod] = true;
+        }
+    }
+
+    function removeMod(address _mod) external onlyOwner {
+        if (moderators[_mod]) {
+            moderators[_mod] = false;
+        }
+    }
+
+    function setLP(address _lp) external {
+        require(lp == address(0), "!lp");
+        lp = _lp;
+    }
+
+    function setGrillRate(uint256 _value) external onlyMod {
+        GRILL_RATE = _value;
+    }
+
+    function setGrillReward(uint256 _value) external onlyMod {
+        GRILL_REWARD = _value;
+    }
+
+    //temporary function only in testnet
+    function set_lastGrillTime(uint256 _value) external onlyMod {
+        lastGrillTime = _value;
     }    
+
+    function unpause() external onlyMod {
+        paused = false;
+        lastGrillTime = now;
+    }
+
+    function onpause() external onlyMod {
+        paused = true;
+        lastGrillTime = now;
+    }
+
+    function getGrillAmount() public view returns (uint256) {
+        if (paused) return 0;
+        uint256 timeBetweenLastGrill = now - lastGrillTime;
+        uint256 tokensInUniswapPool = balanceOf(lp);
+        uint256 dayInSeconds = 1 days;
+        return (tokensInUniswapPool.mul(GRILL_RATE)
+            .mul(timeBetweenLastGrill))
+            .div(dayInSeconds)
+            .div(100);
+    }
+
+    function grillPool() external {
+        uint256 grillAmount = getGrillAmount();
+        require(grillAmount >= 1 * 1e18, "Min grill amount not reached.");
+
+        // Reset last grill time
+        lastGrillTime = now;
+
+        uint256 userReward = grillAmount.mul(GRILL_REWARD).div(100);
+        uint256 finalGrill = grillAmount.sub(userReward);
+
+        _burn(lp, finalGrill);
+        _burn(lp, userReward);
+
+        _mint(msg.sender, userReward);
+        _moveDelegates(address(0), _delegates[msg.sender], userReward);
+
+        totalGrilled = totalGrilled.add(finalGrill);
+
+        IUniswapV2Pair(lp).sync();
+
+        emit PoolGrilled(msg.sender, grillAmount, totalSupply(), balanceOf(lp), userReward);
+    }
+
+    event PoolGrilled(address _user, uint256 grillAmount, uint256 newTotalSupply, uint256 newUniswapPoolSupply, uint256 userReward);
+
 
     // Copied and modified from YAM code:
     // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernanceStorage.sol

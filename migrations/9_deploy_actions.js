@@ -4,8 +4,7 @@ const GBTToken = artifacts.require('./TokenGBT.sol')
 const Members = artifacts.require('./Members.sol')
 const Lottery = artifacts.require("./Lottery.sol")
 const MasterChef = artifacts.require('./MasterChef.sol')
-const Controller = artifacts.require('./Controller.sol')
-
+const Presale = artifacts.require('./Presale.sol')
 
 module.exports = async function (deployer) {
     const token = await Token.deployed()
@@ -13,14 +12,14 @@ module.exports = async function (deployer) {
     const members = await Members.deployed()
     const lottery = await Lottery.deployed()
     const masterchef = await MasterChef.deployed()
-    const controller = await Controller.deployed()
-    
+    const presale = await Presale.deployed()
+       
     if (parseInt(process.env.DEPLOY_ACTIONS) == 1) {
 
         await members.addMod(masterchef.address)
         await members.addSupport(masterchef.address)
-        await members.addMod(controller.address)
-        await members.addSupport(controller.address)
+        await members.addMod(presale.address)
+        await members.addSupport(presale.address)
         await members.addMod(process.env.DEV_ADDRESS)
         await members.addSupport(process.env.DEV_ADDRESS)
         await members.addMember(process.env.DEV_ADDRESS, process.env.DEV_ADDRESS)
@@ -34,20 +33,16 @@ module.exports = async function (deployer) {
         await lottery.setPercent(40, 20, 15, 10, 8, 7)
 
         await token.mint(process.env.DEV_ADDRESS, web3.utils.toWei(process.env.TOKENS_MINT))
+        await token.mint(presale.address, web3.utils.toWei(42400))
+
         await token.transferOwnership(masterchef.address)
-
-        await gbtToken.mint(process.env.DEV_ADDRESS, web3.utils.toWei(process.env.TOKENS_MINT))
         await gbtToken.transferOwnership(masterchef.address)
-
-        await masterchef.setPercent(new BigNumber((3 * (10 ** 18))), new BigNumber((2 * (10 ** 18))), new BigNumber((1 * (10 ** 18))), new BigNumber((1 * (10 ** 18))), new BigNumber((1 * (10 ** 18))))
-        await masterchef.lottery(lottery.address)
-        await masterchef.controller(controller.address)
 
         if (parseInt(process.env.TRANSFER_OWNER_TO_DEV) == 1) {
             await members.transferOwnership(process.env.DEV_ADDRESS)
             await lottery.transferOwnership(process.env.DEV_ADDRESS)
             await masterchef.transferOwnership(process.env.DEV_ADDRESS)
-            await controller.transferOwnership(process.env.DEV_ADDRESS)
+            await presale.transferOwnership(process.env.DEV_ADDRESS)
         }
 
     }

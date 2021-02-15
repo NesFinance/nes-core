@@ -11,6 +11,7 @@ import "./TokenGBT.sol";
 import "./interfaces/IMigratorChef.sol";
 import "./interfaces/IMembers.sol";
 import "./interfaces/IPancakeFactory.sol";
+import "./interfaces/IPresale.sol";
 
 
 // MasterChef is the master of Token. He can make Token and he is a fair guy.
@@ -63,20 +64,20 @@ contract MasterChef is Ownable {
     address public wbnb;
     // LP address.
     address public tokenLP;
-    // LP GBT address.
-    address public gbtLP;
     // Dev address.
     address public devaddr;
-    // Controller address
-    address public controlleraddr;
     // Lottery address.
     address public lotteryaddr;
+    // Presale address.
+    address public presaleaddr;
     // Tokens created per block.
     uint256 public tokenPerBlock;
     // Bonus muliplier for early token makers.
     uint256 public BONUS_MULTIPLIER = 1;
     // The migrator contract. It has a lot of power. Can only be set through governance (owner).
     IMigratorChef public migrator;
+    // minters
+    mapping(address => bool) public minters;
 
     // Info of each pool.
     PoolInfo[] public poolInfo;
@@ -87,8 +88,7 @@ contract MasterChef is Ownable {
     // The block number when TOKEN mining starts.
     uint256 public startBlock;
     // Percentage of referrals
-    uint256[5] public refPercent = [0, 0, 0, 0, 0];
-    mapping (uint256 => uint256) public p;
+    uint256[5] public refPercent = [2 ether, 1 ether, 1 ether, 0.6 ether, 0.4 ether];
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -140,23 +140,7 @@ contract MasterChef is Ownable {
                 accTokenPerShare: 0
             }));
             totalAllocPoint = totalAllocPoint.add(1000);
-        }
-        if (IPancakeFactory(factory).getPair(address(gbt), wbnb) == address(0)) {
-            IPancakeFactory(factory).createPair(address(gbt), wbnb);
-            gbtLP = IPancakeFactory(factory).getPair(address(gbt), wbnb);
-        }        
-    }
-
-    function setP(uint256 _pid, uint256 _value) external onlyOwner {
-        p[_pid] = _value;
-    }
-
-    function setPercent(uint256 r_1, uint256 r_2, uint256 r_3, uint256 r_4, uint256 r_5) external onlyOwner {
-        refPercent[0] = r_1;
-        refPercent[1] = r_2;
-        refPercent[2] = r_3;
-        refPercent[3] = r_4;
-        refPercent[4] = r_5;
+        }    
     }
 
     function updateMultiplier(uint256 multiplierNumber) public onlyOwner {
@@ -193,6 +177,7 @@ contract MasterChef is Ownable {
         if (_withUpdate) {
             massUpdatePools();
         }
+        minters[address(_lpToken)] = true;
         uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
         poolInfo.push(PoolInfo({
@@ -295,7 +280,7 @@ contract MasterChef is Ownable {
 
     // Deposit LP tokens to MasterChef for TOKEN allocation.
     function deposit(uint256 _pid, uint256 _amount, address ref) public {
-
+        require(checkPresale() == true, "Pre-sale has not ended");
         require (_pid != 0, 'deposit token by staking');
 
         if(member.isMember(ref) == false){
@@ -348,6 +333,7 @@ contract MasterChef is Ownable {
 
     // Stake token tokens to MasterChef
     function enterStaking(uint256 _amount, address ref) public {
+        require(checkPresale() == true, "Pre-sale has not ended");
         
         if(member.isMember(ref) == false){
             ref = member.membersList(0);
@@ -419,22 +405,39 @@ contract MasterChef is Ownable {
         devaddr = _devaddr;
     }
 
-    function controller(address _controlleraddr) public onlyOwner {
-        controlleraddr = _controlleraddr;
+    modifier onlyMinters() {
+        require(minters[msg.sender], "Must be minters");
+        _;
     }
 
-    function mintController(address _user, uint256 _amount) public {
-        require(msg.sender == controlleraddr, "controller: wut?");
+    function mint(address _user, uint256 _amount) onlyMinters external {
         token.mint(_user, _amount);
-    } 
+    }
 
-    function lottery(address _lotteryaddr) public onlyOwner {
+    function lottery(address _lotteryaddr) external {
+        require(lotteryaddr == address(0), "lottery: started?");
+        minters[_lotteryaddr] = true;
         lotteryaddr = _lotteryaddr;
     }
 
-    function lotteryGain(address _user, uint256 _amount) public {
-        require(msg.sender == lotteryaddr, "lottery: wut?");
-        token.mint(_user, _amount);
+    function presale(address _presaleaddr) external {
+        require(presaleaddr == address(0), "presale: started?");
+        minters[_presaleaddr] = true;
+        presaleaddr = _presaleaddr;
+    }
+
+    function checkPresale() public view returns(bool) {
+        return IPresale(presaleaddr).liquidityLocked();
+    }
+
+    function addMod(address _mod) external onlyOwner {
+        if (_mod != address(0x0) && _mod != address(0)) {
+            token.addMod(_mod);
+        }
+    }
+
+    function removeMod(address _mod) external onlyOwner {
+        token.removeMod(_mod);
     }    
 
 }

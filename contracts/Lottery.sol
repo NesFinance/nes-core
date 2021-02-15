@@ -154,7 +154,7 @@ contract Lottery is Basic {
 
     function sendToken(address _user, uint256 _amount) private {
         if( _amount > 0 && (_user != address(0) && _user != address(0x0))){
-            masterchef.lotteryGain(_user, _amount);
+            masterchef.mint(_user, _amount);
         }
     }
 

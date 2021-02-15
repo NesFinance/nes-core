@@ -112,14 +112,6 @@ contract('Lottery', ([owner]) => {
         assert(ownerNew == MasterChef.address)
     })
 
-    it('Change address lottery in masterchef', async () => {
-        const masterchef = await MasterChef.deployed()
-        const lottery = await Lottery.deployed()
-        await masterchef.lottery(lottery.address)
-        const lotteryaddr = await masterchef.lotteryaddr.call()
-        assert(lotteryaddr == lottery.address)
-    })
-
     it('set game', async () => {
         const accounts = await web3.eth.getAccounts()
         const lottery = await Lottery.deployed()
